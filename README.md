@@ -4,12 +4,12 @@ This repository provides Terraform configuration files to automate the deploymen
 
 ___
 ## Applicable NSX versions
-NSX-T 4.1.x
+NSX 4.1.x
 
 
 ## DC in a Box deployment steps
 1)	Deploy the NSX Manager OVA via the vSphere Client
 2)	Check that the NSX Manager GUI is accessible and install the license
 3)	Download the terraform configuration files from this repo
-4)	Cistomize the variables.tf file based on your environment
-5)	Run terraform apply
+4)	Customize the variables.tf file based on your environment
+5)	Run terraform init, then terraform apply
