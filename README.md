@@ -1,6 +1,6 @@
 # dcinabox_terraform
 
-This repository provides Terraform configuration files to automate the deployment of the Datacenter in a Box solution described in the [NSX Easy Adotion Design Guide Document](https://communities.vmware.com/t5/VMware-NSX-Documents/NSX-Easy-Adoption-Design-Guide/ta-p/2936898). Running the automation requires a machine with Terraform installed. This branch leverages the version of the terraform provider available on the Hashicorp registry. To leverage newer upstream versions please check other branches in this repository.
+This repository provides Terraform configuration files to automate the deployment of the Datacenter in a Box solution described in the [NSX Easy Adotion Design Guide Document](https://nsx.techzone.vmware.com/resource/nsx-easy-adoption-design-guide). Running the automation requires a machine with Terraform installed. This branch leverages the version of the terraform provider available on the Hashicorp registry. To leverage newer upstream versions please check other branches in this repository.
 
 ___
 ## Applicable versions
