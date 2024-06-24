@@ -273,7 +273,7 @@ resource "nsxt_policy_host_transport_node_collection" "htnc1" {
 
 
 data "nsxt_policy_host_transport_node_collection_realization" "htnc1_realization" {
-  id        = nsxt_policy_host_transport_node_collection.htnc1.id
+  path      = nsxt_policy_host_transport_node_collection.htnc1.path
   timeout   = 1200
   delay     = 1
 }
