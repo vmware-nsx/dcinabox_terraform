@@ -5,7 +5,7 @@ This repository provides Terraform configuration files to automate the deploymen
 ___
 ## Applicable versions
 1) NSX 4.1.x
-2) NSX Terraform provider 3.5.0
+2) NSX Terraform provider 3.6+
 
 
 ## DC in a Box deployment steps
