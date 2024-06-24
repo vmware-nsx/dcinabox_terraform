@@ -1,16 +1,10 @@
-# ---------------------------------------------------------------------- #
-#  Providers
-# ---------------------------------------------------------------------- #
-
 terraform {
   required_providers {
     nsxt = {
       source = "vmware/nsxt"
-      version = "3.5.0"
     }
     vsphere = {
-      source = "hashicorp/vsphere"
-      version = "2.6.1"
+      source = "vmware/vsphere"
     }
   }
 }
@@ -281,6 +275,14 @@ resource "nsxt_policy_host_transport_node_collection" "htnc1" {
 }
 
 
+data "nsxt_policy_host_transport_node_collection_realization" "htnc1_realization" {
+  id        = nsxt_policy_host_transport_node_collection.htnc1.id
+  timeout   = 1200
+  delay     = 1
+}
+
+
+
 # ------------------------------------------------------------------------------------------------------------ #
 #  Create Edge segments, uplink segment will connect to fpath0 and overlay segment will connect to fpath1
 # ------------------------------------------------------------------------------------------------------------ #
@@ -293,6 +295,7 @@ resource "nsxt_policy_segment" "dcinabox-trunk-uplink" {
   advanced_config {
     uplink_teaming_policy = "uplink_1_primary_uplink_2_secondary"
   }
+  depends_on = [data.nsxt_policy_host_transport_node_collection_realization.htnc1_realization]
 }
 
 resource "nsxt_policy_segment" "dcinabox-trunk-overlay" {
@@ -302,20 +305,32 @@ resource "nsxt_policy_segment" "dcinabox-trunk-overlay" {
   advanced_config {
     uplink_teaming_policy = "uplink_2_primary_uplink_1_secondary"
   }
+  depends_on = [data.nsxt_policy_host_transport_node_collection_realization.htnc1_realization]
 }
+
+
+data "nsxt_policy_segment_realization" "dcinabox-trunk-uplink_realization" {
+  path = nsxt_policy_segment.dcinabox-trunk-uplink.path
+}
+
+data "nsxt_policy_segment_realization" "dcinabox-trunk-overlay_realization" {
+  path = nsxt_policy_segment.dcinabox-trunk-overlay.path
+}
+
 
 
 data "vsphere_network" "dcinabox-trunk-uplink" {
-  name          = "dcinabox-trunk-uplink"
+  name          = data.nsxt_policy_segment_realization.dcinabox-trunk-uplink_realization.network_name
   datacenter_id = data.vsphere_datacenter.datacenter.id
-  depends_on = [data.nsxt_compute_manager_realization.vcenter_realization,nsxt_policy_segment.dcinabox-trunk-uplink]
 }
 
 data "vsphere_network" "dcinabox-trunk-overlay" {
-  name          = "dcinabox-trunk-overlay"
+  name          = data.nsxt_policy_segment_realization.dcinabox-trunk-overlay_realization.network_name
   datacenter_id = data.vsphere_datacenter.datacenter.id
-  depends_on = [data.nsxt_compute_manager_realization.vcenter_realization,nsxt_policy_segment.dcinabox-trunk-overlay]
 }
+
+
+
 
 # ---------------------------------------------------------------------- #
 #  Edge Nodes
@@ -352,7 +367,7 @@ resource "nsxt_edge_transport_node" "edgenode1" {
     }
     vm_deployment_config {
       management_network_id = data.vsphere_network.mgmt_network.id
-      data_network_ids      = [ data.vsphere_network.dcinabox-trunk-uplink.id, data.vsphere_network.dcinabox-trunk-overlay.id]
+      data_network_ids      = [data.vsphere_network.dcinabox-trunk-uplink.id, data.vsphere_network.dcinabox-trunk-overlay.id ]
       compute_id            = data.vsphere_compute_cluster.cluster.id
       storage_id            = data.vsphere_datastore.edge1_datastore.id
       vc_id                 = nsxt_compute_manager.vcenter.id
@@ -403,7 +418,7 @@ resource "nsxt_edge_transport_node" "edgenode2" {
     }
     vm_deployment_config {
       management_network_id = data.vsphere_network.mgmt_network.id
-      data_network_ids      = [ data.vsphere_network.dcinabox-trunk-uplink.id, data.vsphere_network.dcinabox-trunk-overlay.id]
+      data_network_ids      = [data.vsphere_network.dcinabox-trunk-uplink.id, data.vsphere_network.dcinabox-trunk-overlay.id]
       compute_id            = data.vsphere_compute_cluster.cluster.id
       storage_id            = data.vsphere_datastore.edge2_datastore.id
       vc_id                 = nsxt_compute_manager.vcenter.id
@@ -481,7 +496,7 @@ resource "nsxt_policy_tier0_gateway" "nsx-gateway" {
 }
 
 # ---------------------------------------------------------------------- #
-#  NSX-Gateway interfaces 
+#  NSX-Gateway interfaces
 # ---------------------------------------------------------------------- #
 
 resource "nsxt_policy_segment" "edge-uplink" {
@@ -524,7 +539,7 @@ resource "nsxt_policy_tier0_gateway_interface" "uplink_edge2" {
 
 # ---------------------------------------------------------------------
 #  NSX-Gateway Default Route
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_static_route" "default" {
   display_name = "default_route"
@@ -540,7 +555,7 @@ resource "nsxt_policy_static_route" "default" {
 
 # ---------------------------------------------------------------------- #
 #  NSX-Gateway HA VIP
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_tier0_gateway_ha_vip_config" "ha-vip" {
   config {
@@ -552,7 +567,7 @@ resource "nsxt_policy_tier0_gateway_ha_vip_config" "ha-vip" {
 
 # ---------------------------------------------------------------------- #
 #  NSX-Gateway NAT
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_nat_rule" "SNAT_ALL" {
   display_name         = "Global SNAT"
@@ -568,8 +583,8 @@ resource "nsxt_policy_nat_rule" "SNAT_ALL" {
 
 
 # ---------------------------------------------------------------------- #
-#  Virtual Networks for workloads (DMZ and Internal) 
-# ---------------------------------------------------------------------- 
+#  Virtual Networks for workloads (DMZ and Internal)
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_segment" "dmz" {
   display_name        = "DMZ"
@@ -599,9 +614,9 @@ resource "nsxt_policy_segment" "internal" {
   }
 }
 
-# ---------------------------------------------------------------------- 
-#  Security Groups 
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
+#  Security Groups
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_group" "RDP-REMOTE-ACCESS" {
   display_name = "RDP-REMOTE-ACCESS"
@@ -658,9 +673,9 @@ resource "nsxt_policy_group" "DMZ" {
   }
 }
 
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 #  Security Services
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 data "nsxt_policy_service" "rdp_service" {
   display_name = "RDP"
@@ -670,9 +685,9 @@ data "nsxt_policy_service" "ssh_service" {
   display_name = "SSH"
 }
 
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 #  DFW Policies
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 
 resource "nsxt_policy_security_policy" "DMZ-ISOLATION" {
@@ -701,9 +716,9 @@ resource "nsxt_policy_security_policy" "DMZ-ISOLATION" {
   }
 }
 
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 #  GFW Policies
-# ---------------------------------------------------------------------- 
+# ----------------------------------------------------------------------
 
 resource "nsxt_policy_gateway_policy" "InboundPolicy" {
   display_name    = "InboundPolicy"
@@ -775,4 +790,3 @@ resource "nsxt_policy_gateway_policy" "OutboundPolicy" {
     create_before_destroy = true
   }
 }
-
