@@ -5,7 +5,7 @@ variable "vcenter" {
     ip         = "192.168.110.22"
     username   = "administrator@vsphere.local"
     password   = "VMware1!"
-    thumbprint = "14:60:F9:B7:B6:E2:51:AC:C4:2C:34:E7:CE:94:AA:69:1A:7D:BF:CD:36:C8:B8:0F:3C:2D:DE:7B:E7:B7:02:89"
+    thumbprint = "24:84:94:F1:88:8E:7C:43:B3:A9:77:1F:FB:44:6F:F6:D9:5F:46:D9:78:51:AE:61:D4:EB:18:81:FF:A4:61:8E"
     dc         = "Site-A"
     cluster    = "Cluster-02a"
     vds        = "SiteA-vDS-02"
