@@ -27,7 +27,7 @@ data "external" "get_cm_thumbprint" {
   program = ["bash", "get_thumbprint.sh"]
 
   query = {
-    server = "vcsa-01a.corp.local"
+    server = var.vcenter["ip"]
     port   = "443"
   }
 }
